@@ -1,26 +1,52 @@
 import Link from "next/link"
 
+import { getCurrentUser } from "@/features/auth/lib/currentUser"
+
 import { Button } from "@/components/ui/button"
-import { UserCard } from "@/components/UserCard"
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 
-// const fullUser = { id: "", name: "Souvik", role: "user" } as const
-const fullUser = null
+export default async function HomePage() {
+  const fullUser = await getCurrentUser()
 
-export default function HomePage() {
+  if (fullUser == null)
+    return (
+      <div className="flex gap-4 items-center">
+        <Button asChild>
+          <Link href="/sign-in">Sign in</Link>
+        </Button>
+        <Button variant="secondary" asChild>
+          <Link href="/sign-up">Sign up</Link>
+        </Button>
+      </div>
+    )
+
   return (
-    <>
-      {fullUser == null ? (
-        <div className="flex gap-4 items-center">
-          <Button asChild>
-            <Link href="/sign-in">Sign in</Link>
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle>
+          User: {fullUser.id} {/* TODO FIX*/}
+        </CardTitle>
+        <CardDescription>Role: {fullUser.role}</CardDescription>
+      </CardHeader>
+      <CardFooter className="flex gap-2">
+        <Button asChild>
+          <Link href="/private">Private page</Link>
+        </Button>
+
+        {fullUser.role === "admin" && (
+          <Button variant="outline" asChild>
+            <Link href="/admin">Admin page</Link>
           </Button>
-          <Button variant="secondary" asChild>
-            <Link href="/sign-up">Sign up</Link>
-          </Button>
-        </div>
-      ) : (
-        <UserCard {...fullUser} />
-      )}
-    </>
+        )}
+
+        <Button variant="destructive">Log out</Button>
+      </CardFooter>
+    </Card>
   )
 }

@@ -33,7 +33,7 @@ type Cookies = {
 export async function createUserSession(user: UserSession, cookies: Cookies) {
   const sessionId = crypto.randomBytes(512).toString().normalize()
 
-  await redisClient.set(`session:${sessionId}`, sessionSchema.parse(user), {
+  await redisClient.set(`session:${sessionId}`, sessionSchema.safeParse(user), {
     ex: SESSION_EXPIRATION_IN_SECONDS,
   })
 
@@ -47,4 +47,20 @@ function setCookies(sessionId: string, cookies: Pick<Cookies, "set">) {
     sameSite: "lax",
     expires: Date.now() + SESSION_EXPIRATION_IN_SECONDS * 1000,
   })
+}
+
+export function getUserFromSession(cookies: Pick<Cookies, "get">) {
+  const sessionId = cookies.get(COOKIE_SESSION_KEY)?.value
+  if (sessionId == null) return null
+
+  return getUserSessionById(sessionId)
+}
+
+async function getUserSessionById(sessionId: string) {
+  const rawUser = await redisClient.get(`session:${sessionId}`)
+
+  const parsed = sessionSchema.safeParse(rawUser)
+  if (!parsed.success) return null
+
+  return parsed.data
 }
