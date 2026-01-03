@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "../../../components/ui/button"
 
-import { SignIn } from "../actions/action"
+import { signIn } from "../actions/action"
 import { signInSchema } from "../actions/schema"
 
 export function SignInForm() {
@@ -31,7 +31,7 @@ export function SignInForm() {
   })
 
   async function onSubmit(data: z.infer<typeof signInSchema>) {
-    const error = await SignIn(data)
+    const error = await signIn(data)
     setError(error)
   }
 

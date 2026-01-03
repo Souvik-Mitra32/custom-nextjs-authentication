@@ -10,9 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { LogoutButton } from "@/features/auth/components/LogoutButton"
 
 export default async function HomePage() {
-  const fullUser = await getCurrentUser()
+  const fullUser = await getCurrentUser({ withFullUser: true })
 
   if (fullUser == null)
     return (
@@ -29,9 +30,7 @@ export default async function HomePage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>
-          User: {fullUser.id} {/* TODO FIX*/}
-        </CardTitle>
+        <CardTitle>User: {fullUser.name}</CardTitle>
         <CardDescription>Role: {fullUser.role}</CardDescription>
       </CardHeader>
       <CardFooter className="flex gap-2">
@@ -45,7 +44,7 @@ export default async function HomePage() {
           </Button>
         )}
 
-        <Button variant="destructive">Log out</Button>
+        <LogoutButton />
       </CardFooter>
     </Card>
   )

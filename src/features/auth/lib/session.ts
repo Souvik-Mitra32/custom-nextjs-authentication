@@ -40,20 +40,21 @@ export async function createUserSession(user: UserSession, cookies: Cookies) {
   setCookies(sessionId, cookies)
 }
 
-function setCookies(sessionId: string, cookies: Pick<Cookies, "set">) {
-  cookies.set(COOKIE_SESSION_KEY, sessionId, {
-    secure: true,
-    httpOnly: true,
-    sameSite: "lax",
-    expires: Date.now() + SESSION_EXPIRATION_IN_SECONDS * 1000,
-  })
-}
-
 export function getUserFromSession(cookies: Pick<Cookies, "get">) {
   const sessionId = cookies.get(COOKIE_SESSION_KEY)?.value
   if (sessionId == null) return null
 
   return getUserSessionById(sessionId)
+}
+
+export async function removeUserFromSession(
+  cookies: Pick<Cookies, "get" | "delete">
+) {
+  const sessionId = cookies.get(COOKIE_SESSION_KEY)?.value
+  if (sessionId == null) return null
+
+  await redisClient.del(`session:${sessionId}`)
+  cookies.delete(COOKIE_SESSION_KEY)
 }
 
 async function getUserSessionById(sessionId: string) {
@@ -63,4 +64,13 @@ async function getUserSessionById(sessionId: string) {
   if (!parsed.success) return null
 
   return parsed.data
+}
+
+function setCookies(sessionId: string, cookies: Pick<Cookies, "set">) {
+  cookies.set(COOKIE_SESSION_KEY, sessionId, {
+    secure: true,
+    httpOnly: true,
+    sameSite: "lax",
+    expires: Date.now() + SESSION_EXPIRATION_IN_SECONDS * 1000,
+  })
 }

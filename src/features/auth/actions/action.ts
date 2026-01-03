@@ -13,10 +13,10 @@ import {
   generateSalt,
   hashPassword,
 } from "../lib/passwordHasher"
-import { createUserSession } from "../lib/session"
+import { createUserSession, removeUserFromSession } from "../lib/session"
 import { cookies } from "next/headers"
 
-export async function SignUp(unsafeData: z.infer<typeof signUpSchema>) {
+export async function signUp(unsafeData: z.infer<typeof signUpSchema>) {
   const parsed = signUpSchema.safeParse(unsafeData)
   if (!parsed.success) return "Unable to create account."
 
@@ -44,7 +44,7 @@ export async function SignUp(unsafeData: z.infer<typeof signUpSchema>) {
   redirect("/")
 }
 
-export async function SignIn(unsafeData: z.infer<typeof signInSchema>) {
+export async function signIn(unsafeData: z.infer<typeof signInSchema>) {
   const parsed = signInSchema.safeParse(unsafeData)
   if (!parsed.success) return "Unable to sign in."
 
@@ -74,8 +74,8 @@ export async function SignIn(unsafeData: z.infer<typeof signInSchema>) {
   redirect("/")
 }
 
-export async function Logout() {
-  // TODO Implement
+export async function logout() {
+  await removeUserFromSession(await cookies())
 
   redirect("/")
 }

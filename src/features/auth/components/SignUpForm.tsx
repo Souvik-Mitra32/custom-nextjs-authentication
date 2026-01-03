@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/field"
 
 import { signUpSchema } from "../actions/schema"
-import { SignUp } from "../actions/action"
+import { signUp } from "../actions/action"
 
 export function SignUpForm() {
   const [error, setError] = useState<string>()
@@ -32,7 +32,7 @@ export function SignUpForm() {
   })
 
   async function onSubmit(data: z.infer<typeof signUpSchema>) {
-    const error = await SignUp(data)
+    const error = await signUp(data)
     setError(error)
   }
 
