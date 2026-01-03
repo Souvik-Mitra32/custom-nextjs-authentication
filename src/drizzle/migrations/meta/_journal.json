@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1767433957759,
+      "tag": "0000_lethal_white_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767434091152,
+      "tag": "0001_slim_shriek",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767434383695,
+      "tag": "0002_steep_gauntlet",
+      "breakpoints": true
+    }
+  ]
+}

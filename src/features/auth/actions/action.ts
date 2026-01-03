@@ -1,0 +1,60 @@
+"use server"
+
+import { redirect } from "next/navigation"
+import { eq } from "drizzle-orm"
+import z from "zod"
+
+import { db } from "@/drizzle/db"
+import { UserTable } from "@/drizzle/schema"
+
+import { signInSchema, signUpSchema } from "./schema"
+import { generateSalt, hashPassword } from "../lib/passwordHasher"
+import { createUserSession } from "../lib/session"
+import { cookies } from "next/headers"
+
+export async function SignUp(unsafeData: z.infer<typeof signUpSchema>) {
+  const parsed = signUpSchema.safeParse(unsafeData)
+  if (!parsed.success) return "Unable to create account."
+
+  const data = parsed.data
+
+  const [existingUser] = await db
+    .select({ id: UserTable.id })
+    .from(UserTable)
+    .where(eq(UserTable.email, data.email))
+
+  if (existingUser) return "Account already exists for this email."
+
+  try {
+    const salt = generateSalt()
+    const hashedPassword = await hashPassword(data.password, salt)
+
+    const [newUser] = await db
+      .insert(UserTable)
+      .values({ ...data, password: hashedPassword, salt })
+      .returning({ id: UserTable.id, role: UserTable.role })
+
+    if (newUser == null) return "Unable to create account."
+
+    await createUserSession(newUser, await cookies())
+  } catch {
+    return "Unable to create account."
+  }
+
+  redirect("/")
+}
+
+export async function SignIn(unsafeData: z.infer<typeof signInSchema>) {
+  const parsed = signInSchema.safeParse(unsafeData)
+
+  if (!parsed.success) return "Unable to sign in."
+  // TODO Implement
+
+  redirect("/")
+}
+
+export async function Logout() {
+  // TODO Implement
+
+  redirect("/")
+}
