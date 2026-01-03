@@ -8,7 +8,11 @@ import { db } from "@/drizzle/db"
 import { UserTable } from "@/drizzle/schema"
 
 import { signInSchema, signUpSchema } from "./schema"
-import { generateSalt, hashPassword } from "../lib/passwordHasher"
+import {
+  comparePasswords,
+  generateSalt,
+  hashPassword,
+} from "../lib/passwordHasher"
 import { createUserSession } from "../lib/session"
 import { cookies } from "next/headers"
 
@@ -25,30 +29,47 @@ export async function SignUp(unsafeData: z.infer<typeof signUpSchema>) {
 
   if (existingUser) return "Account already exists for this email."
 
-  try {
-    const salt = generateSalt()
-    const hashedPassword = await hashPassword(data.password, salt)
+  const salt = generateSalt()
+  const hashedPassword = await hashPassword(data.password, salt)
 
-    const [newUser] = await db
-      .insert(UserTable)
-      .values({ ...data, password: hashedPassword, salt })
-      .returning({ id: UserTable.id, role: UserTable.role })
+  const [newUser] = await db
+    .insert(UserTable)
+    .values({ ...data, password: hashedPassword, salt })
+    .returning({ id: UserTable.id, role: UserTable.role })
 
-    if (newUser == null) return "Unable to create account."
+  if (newUser == null) return "Unable to create account."
 
-    await createUserSession(newUser, await cookies())
-  } catch {
-    return "Unable to create account."
-  }
+  await createUserSession(newUser, await cookies())
 
   redirect("/")
 }
 
 export async function SignIn(unsafeData: z.infer<typeof signInSchema>) {
   const parsed = signInSchema.safeParse(unsafeData)
-
   if (!parsed.success) return "Unable to sign in."
-  // TODO Implement
+
+  const data = parsed.data
+
+  const [existingUser] = await db
+    .select({
+      id: UserTable.id,
+      role: UserTable.role,
+      password: UserTable.password,
+      salt: UserTable.salt,
+    })
+    .from(UserTable)
+    .where(eq(UserTable.email, data.email))
+  if (!existingUser) return "Unable to sign in."
+
+  const isPasswordCorrect = await comparePasswords(
+    data.password,
+    existingUser.password,
+    existingUser.salt
+  )
+
+  if (!isPasswordCorrect) return "Unable to sign in."
+
+  await createUserSession(existingUser, await cookies())
 
   redirect("/")
 }

@@ -31,9 +31,9 @@ type Cookies = {
 }
 
 export async function createUserSession(user: UserSession, cookies: Cookies) {
-  const sessionId = crypto.randomBytes(512).toString().normalize()
+  const sessionId = crypto.randomBytes(512).toString("hex").normalize()
 
-  await redisClient.set(`session:${sessionId}`, sessionSchema.safeParse(user), {
+  await redisClient.set(`session:${sessionId}`, sessionSchema.parse(user), {
     ex: SESSION_EXPIRATION_IN_SECONDS,
   })
 
