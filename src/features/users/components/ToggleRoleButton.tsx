@@ -14,7 +14,7 @@ export function ToggleRoleButton() {
 
   return (
     <Button onClick={handleToggle} disabled={isPending}>
-      Toggle role
+      {isPending ? "Toggling..." : "Toggle role"}
     </Button>
   )
 }

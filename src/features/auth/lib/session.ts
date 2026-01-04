@@ -49,7 +49,7 @@ export function getUserFromSession(cookies: Pick<Cookies, "get">) {
 
 export async function updateUserSessiondData(
   user: UserSession,
-  cookies: Pick<Cookies, "get" | "set">
+  cookies: Pick<Cookies, "get">
 ) {
   const sessionId = cookies.get(COOKIE_SESSION_KEY)?.value
   if (sessionId == null) return null
@@ -57,8 +57,6 @@ export async function updateUserSessiondData(
   await redisClient.set(`session:${sessionId}`, sessionSchema.parse(user), {
     ex: SESSION_EXPIRATION_IN_SECONDS,
   })
-
-  setCookies(sessionId, cookies)
 }
 
 export async function updateUserSessionExpiration(
