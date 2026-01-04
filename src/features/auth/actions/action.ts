@@ -1,5 +1,6 @@
 "use server"
 
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { eq } from "drizzle-orm"
 import z from "zod"
@@ -14,7 +15,6 @@ import {
   hashPassword,
 } from "../lib/passwordHasher"
 import { createUserSession, removeUserFromSession } from "../lib/session"
-import { cookies } from "next/headers"
 
 export async function signUp(unsafeData: z.infer<typeof signUpSchema>) {
   const parsed = signUpSchema.safeParse(unsafeData)
@@ -59,7 +59,7 @@ export async function signIn(unsafeData: z.infer<typeof signInSchema>) {
     })
     .from(UserTable)
     .where(eq(UserTable.email, data.email))
-  if (!existingUser) return "Unable to sign in."
+  if (!existingUser) return "Invalid email/password."
 
   const isPasswordCorrect = await comparePasswords(
     data.password,
@@ -67,7 +67,7 @@ export async function signIn(unsafeData: z.infer<typeof signInSchema>) {
     existingUser.salt
   )
 
-  if (!isPasswordCorrect) return "Unable to sign in."
+  if (!isPasswordCorrect) return "Invalid email/password."
 
   await createUserSession(existingUser, await cookies())
 

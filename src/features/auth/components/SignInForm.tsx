@@ -38,6 +38,8 @@ export function SignInForm() {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-md">
       <FieldSet>
+        {error && <FieldError>{error}</FieldError>}
+
         <FieldGroup>
           <Controller
             control={form.control}
