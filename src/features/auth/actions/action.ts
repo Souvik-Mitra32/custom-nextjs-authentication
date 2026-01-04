@@ -1,20 +1,23 @@
 "use server"
 
 import { cookies } from "next/headers"
+import { NextResponse } from "next/server"
 import { redirect } from "next/navigation"
 import { eq } from "drizzle-orm"
 import z from "zod"
 
 import { db } from "@/drizzle/db"
-import { UserTable } from "@/drizzle/schema"
+import { OAuthProvider, UserTable } from "@/drizzle/schema"
 
 import { signInSchema, signUpSchema } from "./schema"
+
+import { createUserSession, removeUserFromSession } from "../lib/session"
+import { OAuthClient } from "../lib/oAuth/base"
 import {
   comparePasswords,
   generateSalt,
   hashPassword,
 } from "../lib/passwordHasher"
-import { createUserSession, removeUserFromSession } from "../lib/session"
 
 export async function signUp(unsafeData: z.infer<typeof signUpSchema>) {
   const parsed = signUpSchema.safeParse(unsafeData)
@@ -63,8 +66,8 @@ export async function signIn(unsafeData: z.infer<typeof signInSchema>) {
 
   const isPasswordCorrect = await comparePasswords(
     data.password,
-    existingUser.password,
-    existingUser.salt
+    existingUser.password ?? "", // TODO: Fix this
+    existingUser.salt ?? "" // TODO: Fix this
   )
 
   if (!isPasswordCorrect) return "Invalid email/password."
@@ -78,4 +81,10 @@ export async function logout() {
   await removeUserFromSession(await cookies())
 
   redirect("/")
+}
+
+export async function oAuthSignIn(provider: OAuthProvider) {
+  const url = new OAuthClient().createAuthUrl(await cookies())
+
+  return url
 }

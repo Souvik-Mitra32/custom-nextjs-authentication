@@ -15,7 +15,7 @@ const sessionSchema = z.object({
 })
 
 type UserSession = z.infer<typeof sessionSchema>
-type Cookies = {
+export type Cookies = {
   set: (
     key: string,
     value: string,
