@@ -1,6 +1,11 @@
 import z from "zod"
+import crypto from "crypto"
 
 import { Cookies } from "../session"
+
+const STATE_COOKIE_KEY = "oAuthState"
+// Ten minutes in seconds
+const COOKIE_EXPIRATION_SECONDS = 60 * 10
 
 export class OAuthClient<T> {
   private readonly tokenSchema = z.object({
@@ -20,16 +25,22 @@ export class OAuthClient<T> {
   }
 
   createAuthUrl(cookies: Pick<Cookies, "set">) {
+    const state = generateState(cookies)
     const url = new URL("https://discord.com/oauth2/authorize")
+
     url.searchParams.set("client_id", process.env.DISCORD_CLIENT_ID!)
     url.searchParams.set("redirect_uri", this.redirectUrl.toString())
     url.searchParams.set("response_type", "code")
     url.searchParams.set("scope", "identify email")
+    url.searchParams.set("state", state)
 
     return url.toString()
   }
 
-  async fetchUser(code: string) {
+  async fetchUser(code: string, state: string, cookies: Pick<Cookies, "get">) {
+    const isStateValid = validateState(state, cookies)
+    if (!isStateValid) throw new InvalidStateError()
+
     const { accessToken, tokenType } = await this.fetchToken(code)
 
     const response = await fetch("https://discord.com/api/users/@me", {
@@ -92,4 +103,28 @@ export class InvalidUserError extends Error {
     super("Invalid User")
     this.cause = zodError
   }
+}
+
+export class InvalidStateError extends Error {
+  constructor() {
+    super("Invalid User")
+  }
+}
+
+function generateState(cookies: Pick<Cookies, "set">) {
+  const state = crypto.randomBytes(64).toString().normalize()
+
+  cookies.set(STATE_COOKIE_KEY, state, {
+    secure: true,
+    httpOnly: true,
+    sameSite: "lax",
+    expires: Date.now() + COOKIE_EXPIRATION_SECONDS * 1000,
+  })
+
+  return state
+}
+
+function validateState(state: string, cookies: Pick<Cookies, "get">) {
+  const cookieState = cookies.get(STATE_COOKIE_KEY)?.value
+  return cookieState === state
 }
