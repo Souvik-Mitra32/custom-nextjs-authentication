@@ -1,6 +1,18 @@
-import { drizzle } from "drizzle-orm/neon-http"
-import { neon } from "@neondatabase/serverless"
+import { Pool } from "@neondatabase/serverless"
+import { drizzle } from "drizzle-orm/neon-serverless"
 
-const sql = neon(process.env.DATABASE_URL!)
+declare global {
+  var _pool: Pool | undefined
+}
 
-export const db = drizzle(sql)
+const pool =
+  global._pool ??
+  new Pool({
+    connectionString: process.env.DATABASE_URL!,
+  })
+
+if (process.env.NODE_ENV !== "production") {
+  global._pool = pool
+}
+
+export const db = drizzle(pool)

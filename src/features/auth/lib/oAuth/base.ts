@@ -8,6 +8,13 @@ export class OAuthClient<T> {
     token_type: z.string(),
   })
 
+  private readonly userSchema = z.object({
+    id: z.string(),
+    email: z.email(),
+    global_name: z.string().nullable(),
+    username: z.string(),
+  })
+
   private get redirectUrl() {
     return new URL("discord", process.env.OAUTH_REDIRECT_URL_BASE)
   }
@@ -23,7 +30,25 @@ export class OAuthClient<T> {
   }
 
   async fetchUser(code: string) {
-    return await this.fetchToken(code)
+    const { accessToken, tokenType } = await this.fetchToken(code)
+
+    const response = await fetch("https://discord.com/api/users/@me", {
+      headers: {
+        Authorization: `${tokenType} ${accessToken}`,
+      },
+    })
+    const rawData = await response.json()
+
+    const parsed = this.userSchema.safeParse(rawData)
+    if (!parsed.success) throw new InvalidUserError(parsed.error)
+
+    const data = parsed.data
+
+    return {
+      id: data.id,
+      email: data.email,
+      username: data.global_name ?? data.username,
+    }
   }
 
   private async fetchToken(code: string) {
@@ -58,6 +83,13 @@ export class OAuthClient<T> {
 export class InvalidTokenError extends Error {
   constructor(zodError: z.ZodError) {
     super("Invalid Token")
+    this.cause = zodError
+  }
+}
+
+export class InvalidUserError extends Error {
+  constructor(zodError: z.ZodError) {
+    super("Invalid User")
     this.cause = zodError
   }
 }

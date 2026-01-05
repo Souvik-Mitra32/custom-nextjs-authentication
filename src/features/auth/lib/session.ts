@@ -6,7 +6,6 @@ import { redisClient } from "@/redis/redis"
 
 // Seven days in seconds
 const SESSION_EXPIRATION_IN_SECONDS = 60 * 60 * 24 * 7
-
 const COOKIE_SESSION_KEY = "session-id"
 
 const sessionSchema = z.object({
