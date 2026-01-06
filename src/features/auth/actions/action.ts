@@ -1,7 +1,6 @@
 "use server"
 
 import { cookies } from "next/headers"
-import { NextResponse } from "next/server"
 import { redirect } from "next/navigation"
 import { eq } from "drizzle-orm"
 import z from "zod"
@@ -12,7 +11,7 @@ import { OAuthProvider, UserTable } from "@/drizzle/schema"
 import { signInSchema, signUpSchema } from "./schema"
 
 import { createUserSession, removeUserFromSession } from "../lib/session"
-import { OAuthClient } from "../lib/oAuth/base"
+import { getOAuthClient } from "../lib/oAuth/base"
 import {
   comparePasswords,
   generateSalt,
@@ -64,10 +63,13 @@ export async function signIn(unsafeData: z.infer<typeof signInSchema>) {
     .where(eq(UserTable.email, data.email))
   if (!existingUser) return "Invalid email/password."
 
+  if (existingUser.password == null || existingUser.salt == null)
+    return "Unable to sign in"
+
   const isPasswordCorrect = await comparePasswords(
     data.password,
-    existingUser.password ?? "", // TODO: Fix this
-    existingUser.salt ?? "" // TODO: Fix this
+    existingUser.password,
+    existingUser.salt
   )
 
   if (!isPasswordCorrect) return "Invalid email/password."
@@ -84,7 +86,7 @@ export async function logout() {
 }
 
 export async function oAuthSignIn(provider: OAuthProvider) {
-  const url = new OAuthClient().createAuthUrl(await cookies())
+  const oAuthClient = getOAuthClient(provider)
 
-  return url
+  return oAuthClient.createAuthUrl(await cookies())
 }

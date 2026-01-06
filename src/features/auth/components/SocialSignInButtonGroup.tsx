@@ -29,10 +29,10 @@ export function SocialSignInButtonGroups() {
 
       <Button
         variant="outline"
-        onClick={() => handleOAuthSignIn("github")}
+        onClick={() => handleOAuthSignIn("google")}
         disabled={isPending}
       >
-        Sign in with Github
+        Sign in with Google
       </Button>
     </div>
   )

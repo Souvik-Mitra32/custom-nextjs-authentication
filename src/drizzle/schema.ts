@@ -16,7 +16,7 @@ export const userRoleEnum = pgEnum("user_roles", userRoles)
 export const UserTable = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom().notNull(),
   name: varchar("name").notNull(),
-  email: varchar("email").unique().notNull(),
+  email: varchar("email").unique(),
   password: varchar("password"),
   salt: text("salt"),
   role: userRoleEnum().default("user").notNull(),
@@ -29,7 +29,7 @@ export const UserTable = pgTable("users", {
     .notNull(),
 })
 
-export const oAuthProviders = ["discord", "github"] as const
+export const oAuthProviders = ["discord", "google"] as const
 export type OAuthProvider = (typeof oAuthProviders)[number]
 export const oAuthProvidersEnum = pgEnum("oauth_providers", oAuthProviders)
 

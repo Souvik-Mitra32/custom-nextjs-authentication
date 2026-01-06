@@ -12,7 +12,7 @@ import {
   UserTable,
 } from "@/drizzle/schema"
 
-import { OAuthClient } from "@/features/auth/lib/oAuth/base"
+import { getOAuthClient } from "@/features/auth/lib/oAuth/base"
 import { createUserSession } from "@/features/auth/lib/session"
 
 export async function GET(
@@ -31,12 +31,9 @@ export async function GET(
       )}`
     )
 
+  const oAuthClient = getOAuthClient(provider)
   try {
-    const oAuthUser = await new OAuthClient().fetchUser(
-      code,
-      state,
-      await cookies()
-    )
+    const oAuthUser = await oAuthClient.fetchUser(code, state, await cookies())
 
     const user = await connectUserToAccount(oAuthUser, provider)
 
@@ -54,7 +51,7 @@ export async function GET(
 }
 
 async function connectUserToAccount(
-  { id, email, username }: { id: string; email: string; username: string },
+  { id, email, name }: { id: string; email: string; name: string },
   provider: OAuthProvider
 ) {
   return await db.transaction(async (tx) => {
@@ -66,7 +63,7 @@ async function connectUserToAccount(
     if (user == null) {
       const [newUser] = await tx
         .insert(UserTable)
-        .values({ name: username, email })
+        .values({ name: name, email })
         .returning({ id: UserTable.id, role: UserTable.role })
 
       user = newUser
